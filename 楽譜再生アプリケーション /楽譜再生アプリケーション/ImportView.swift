@@ -32,8 +32,8 @@ struct ImportView: View {
     
     // MARK: - 入力用State
     @State private var scoreName: String = ""  // 楽譜名
-    @State private var pdfParts: [PdfPart] = [] // ← 複数PDFパート対応！（追加）
-    @State private var newPdfPartName: String = "" // ← 新しいPDFパート名
+    @State private var pdfParts: [PdfPart] = [] //複数PDFパート
+    @State private var newPdfPartName: String = "" // 新しいPDFパート名
     @State private var newPdfURL: URL? = nil // ← 新しく選択されたPDFファイル
     @State private var pdfURL: URL? = nil      // 選択されたPDFファイルURL
     @State private var mp3Parts: [Mp3Part] = [] // パートごとのMP3
@@ -459,7 +459,11 @@ struct ImportView: View {
                 .padding(.horizontal, 20)
                 .background(loadBackground)
                 .cornerRadius(16)
-                .foregroundStyle(LinearGradient(colors: [.white.opacity(0.9), .white], startPoint: .top, endPoint: .bottom))
+                .foregroundStyle(
+                    isReady
+                    ? Color.black
+                    : Color.white.opacity(0.9)
+                )
                 .shadow(color: Color.white.opacity(0.3), radius: 2)
                 .scaleEffect(isReady ? 1.05 : 1.0)
                 .animation(.easeInOut(duration: 0.3), value: isReady)
