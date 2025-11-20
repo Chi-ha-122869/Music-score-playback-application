@@ -9,7 +9,7 @@ struct MyApp: App {
             NavigationStack {
                 TopView()
             }
-            .environmentObject(scoreStore) //ここで全体に共有！
+            .environmentObject(scoreStore) //ここで全体に共有
         }
     }
 }
