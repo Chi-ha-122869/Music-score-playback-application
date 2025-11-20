@@ -225,8 +225,8 @@ extension View {
 }
 struct OutlinedText: ViewModifier {
     var color: Color = .white
-    var thickness: CGFloat = 0.6   // ← 少し細めに
-    var opacity: Double = 0.6      // ← 白の強さを下げる
+    var thickness: CGFloat = 0.6
+    var opacity: Double = 0.6
     func body(content: Content) -> some View {
         content
             .shadow(color: color.opacity(opacity), radius: 0, x: thickness, y: 0)
