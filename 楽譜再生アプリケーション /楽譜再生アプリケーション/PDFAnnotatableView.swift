@@ -41,7 +41,7 @@ struct PDFKitRepresentedView: UIViewRepresentable {
     // SwiftUIの状態が更新されたとき（＝Viewの再描画が必要なとき）に呼ばれる。
     // ここではURLや設定が変わらないため、何も処理する必要がない。
     func updateUIView(_ pdfView: PDFView, context: Context) {
-        // ⚙️ 通常ここでは、SwiftUI側の状態変化をUIKit側に反映させる処理を書く。
+        // 通常ここでは、SwiftUI側の状態変化をUIKit側に反映させる処理を書く。
         // 例: ページ番号、ズームレベル、アノテーションの更新など。
         // 今回は静的表示のみのため空のままでOK。
     }
