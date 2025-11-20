@@ -72,10 +72,10 @@ struct PlayerView: View {
             
             GeometryReader { geometry in
                 VStack(spacing: 0) {
-                    // ▼ PDF表示部分
+                    // PDF表示部分
                     pdfSection(geometry: geometry)
                     
-                    // ▼ コントロール部分（再生・ループ・パート切替）
+                    // コントロール部分（再生・ループ・パート切替）
                     controlSection(geometry: geometry)
                 }
             }
@@ -100,7 +100,7 @@ struct PlayerView: View {
     @ViewBuilder
     private func pdfSection(geometry: GeometryProxy) -> some View {
         ZStack(alignment: .topLeading) {
-            // ▼ PDFビュー（選択された譜面を表示、安全版）
+            // PDFビュー（選択された譜面を表示、安全版）
             if !score.pdfParts.isEmpty {
                 PDFAnnotatableView(
                     url: score.pdfParts[selectedPdfIndex].pdfURL,
@@ -115,7 +115,7 @@ struct PlayerView: View {
                     .frame(height: geometry.size.height * 2 / 3)
             }
             
-            // ▼ 左上ドロップダウン（カスタム色付き）
+            // 左上ドロップダウン（カスタム色付き）
             if score.pdfParts.count > 1 {
                 Menu {
                     // 中の選択肢（PDFパート名一覧）
@@ -131,7 +131,7 @@ struct PlayerView: View {
                     // 表示中の部分（ラベル）
                     HStack(spacing: 6) {
                         Text(score.pdfParts[selectedPdfIndex].partName)
-                            .foregroundColor(.appAccent) // ← ライトグリーン
+                            .foregroundColor(.appAccent)
                             .font(.system(size: 18, weight: .semibold))
                         Image(systemName: "chevron.down")
                             .foregroundColor(.appAccent)
@@ -153,15 +153,15 @@ struct PlayerView: View {
         }
     }
 
-    //MARK: コントロール部分（再レイアウト済み）
+    //MARK: コントロール部分
     @ViewBuilder
     private func controlSection(geometry: GeometryProxy) -> some View {
         ScrollView {
             VStack(spacing: 15) {
-                // ▼ 再生位置バー（上段）
+                // 再生位置バー（上段）
                 playbackSlider()
                 
-                // ▼ 中段：左に再生・ループボタン、右に速度バーとループ範囲
+                //  中段：左に再生・ループボタン、右に速度バーとループ範囲
                 HStack(alignment: .top, spacing: 10) {
                     VStack(spacing: 10) {
                         // 再生ボタン
@@ -335,7 +335,7 @@ struct PlayerView: View {
                 .font(.system(size: 18, weight: .bold))
                 .foregroundColor(.white)
             
-            // ▼ 全てON / OFFボタン（タイトルの下に配置）
+            //全てON / OFFボタン（タイトルの下に配置）
             HStack(spacing: 25) {
                 Button {
                     // 全てON
@@ -381,7 +381,7 @@ struct PlayerView: View {
             }
             .padding(.horizontal, 10)
             
-            // ▼ 各パートトグル一覧
+            //各パートトグル一覧
             ForEach(score.mp3Parts) { part in
                 PartToggleView(
                     part: part,
