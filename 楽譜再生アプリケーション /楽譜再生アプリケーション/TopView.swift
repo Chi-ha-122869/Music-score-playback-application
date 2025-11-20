@@ -1,51 +1,50 @@
 import SwiftUI
 
-// MARK: - アプリ起動時に最初に表示されるトップ画面
-// 楽譜の読み込み・ライブラリ・その他のメニューへ遷移するハブ的役割を持つ。
+// MARK: - TopView
+// アプリ起動時に表示されるトップ画面
+// 楽譜の読み込み・ライブラリ・その他のメニューへ遷移するハブ的役割を持つ
 struct TopView: View {
-    // 各種アニメーション用の状態変数
-    @State private var showContent = false      // 全体のフェードイン制御
-    @State private var animateIcon = false      // アイコンのアニメーション制御
-    @State private var animateTitle = false     // タイトルのアニメーション制御
+    // 背景、ボタン、アイコン、タイトルのアニメーション制御用状態変数
+    @State private var showBackground = false   // 背景グラデーションのフェードイン
+    @State private var showButtons = false      // ボタン群のフェードイン
+    @State private var animateIcon = false      // アプリアイコンのフェード＆回転
+    @State private var animateTitle = false     // タイトルのフェード＆拡大
     
-    // ScoreStoreをこのViewで生成し、.environmentObjectとしてアプリ全体に共有
-    // → ImportViewやSheetListViewから同じデータ（楽譜情報）を参照できるようにする
+    // ScoreStoreを環境オブジェクトとして受け取る
+    // 他の画面（ImportView, SheetListViewなど）と共有
     @EnvironmentObject var scoreStore: ScoreStore
     
     var body: some View {
         ZStack {
             // MARK: - 背景グラデーション
-            // アプリ全体のテーマカラーであるオレンジ〜ブルーのグラデーションを使用
+            // アプリ全体のテーマカラー
             LinearGradient(
-                gradient: Gradient(colors: [.appOrange, .appDeepBlue]),
+                colors: [.appOrange, .appDeepBlue],
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
             )
-            .ignoresSafeArea() // 端末の端まで背景を拡張
-            .opacity(showContent ? 1 : 0.0) // 表示アニメーション
-            .animation(.easeInOut(duration: 1.2), value: showContent)
+            .ignoresSafeArea() // 画面端まで拡張
+            .opacity(showBackground ? 1 : 0) // 表示フェード
             
-            ScrollView{
+            // MARK: - コンテンツ
+            ScrollView {
                 VStack(spacing: 40) {
-                    Spacer().frame(height: 7)
-
+                    Spacer().frame(height: 7) // 上部余白
+                    
                     // MARK: - アプリのメインアイコン
-                    // アニメーション付きで登場するロゴ画像
+                    // フェードイン + 回転 + 拡大アニメーション
                     Image("Image")
                         .resizable()
                         .scaledToFit()
                         .frame(width: 150, height: 150)
-                        .rotationEffect(.degrees(animateIcon ? 0 : -15)) // 回転アニメーション
-                        .opacity(animateIcon ? 1 : 0) // フェードイン
-                        .scaleEffect(animateIcon ? 1 : 0.8) // 拡大縮小アニメーション
+                        .opacity(animateIcon ? 1 : 0)
+                        .scaleEffect(animateIcon ? 1 : 0.8)
+                        .rotationEffect(.degrees(animateIcon ? 0 : -15))
                         .shadow(color: .black.opacity(0.3), radius: 12, x: 0, y: 6)
-                        .animation(
-                            .spring(response: 1.2, dampingFraction: 0.6).delay(0.3),
-                            value: animateIcon
-                        )
+                        .animation(.spring(response: 1.2, dampingFraction: 0.6), value: animateIcon)
                     
                     // MARK: - タイトルテキスト
-                    // 「楽譜再生アプリケーション」のメインタイトル表示
+                    // 「楽譜再生アプリケーション」をグラデーション文字で表示
                     Text("楽譜再生\nアプリケーション")
                         .font(.system(size: 40, weight: .black, design: .rounded))
                         .foregroundStyle(
@@ -57,31 +56,23 @@ struct TopView: View {
                         )
                         .multilineTextAlignment(.center)
                         .shadow(color: .black.opacity(0.4), radius: 4, x: 2, y: 2)
-                        .lineLimit(nil)
-                        .minimumScaleFactor(0.5) // 横幅が足りない場合は縮小して表示
                         .opacity(animateTitle ? 1 : 0)
                         .scaleEffect(animateTitle ? 1 : 0.9)
-                    // タイトルのフェード＆拡大アニメーション
-                        .animation(.easeOut(duration: 1.2).delay(0.6), value: animateTitle)
+                        .animation(.easeOut(duration: 1.2), value: animateTitle)
                     
                     // MARK: - メインメニューのボタン群
                     VStack(spacing: 25) {
-                        
-                        // MARK: 読み込みボタン
-                        // ImportViewへ遷移し、PDFとMP3を読み込む画面を表示
+                        // 読み込みボタン → ImportViewへ遷移
                         NavigationLink(destination: ImportView().environmentObject(scoreStore)) {
                             TopButton(title: "読み込み", subtitle: "PDF、MP3を読み込む")
                         }
                         
-                        // MARK: 楽譜ライブラリボタン
-                        // SheetListViewへ遷移し、保存された楽譜の一覧を表示
-                        // 同じscoreStoreを共有しているため、ImportViewで追加した楽譜がここに反映される
+                        // 楽譜ライブラリボタン → SheetListViewへ遷移
                         NavigationLink(destination: SheetListView().environmentObject(scoreStore)) {
                             TopButton(title: "楽譜ライブラリ", subtitle: "読み込んだ楽譜の一覧")
                         }
                         
-                        // MARK: その他ボタン
-                        // MuseScoreなどの外部ソフトの操作説明を表示する情報画面
+                        // その他ボタン → OtherViewへ遷移
                         NavigationLink(destination: OtherView().environmentObject(scoreStore)) {
                             TopButton(
                                 title: "その他",
@@ -89,28 +80,29 @@ struct TopView: View {
                             )
                         }
                     }
-                    // ボタン群のフェードイン
-                    .opacity(showContent ? 1 : 0)
-                    .animation(.easeInOut(duration: 1).delay(1.0), value: showContent)
-                    .padding(.bottom,30)
+                    .opacity(showButtons ? 1 : 0) // ボタン群のフェードイン
+                    .offset(y: showButtons ? 0 : 20) // 少し下から上にスライドする演出
+                    .animation(.easeInOut(duration: 1.0), value: showButtons)
+                    .padding(.bottom, 30) // 下部余白
                 }
                 .padding(.horizontal, 30)
             }
         }
-        // MARK: - onAppear（画面表示時にアニメーション開始）
         .onAppear {
-            showContent = true      // 背景とボタン群の表示開始
-            animateIcon = true      // アイコンアニメーション開始
-            animateTitle = true     // タイトルアニメーション開始
+            // 画面表示時の順次アニメーション
+            withAnimation(.easeInOut(duration: 1.0)) { showBackground = true } // 背景フェード
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { animateIcon = true } // アイコン
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { animateTitle = true } // タイトル
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { showButtons = true } // ボタン群
         }
     }
 }
 
-// MARK: - カスタムボタン（TopButton）
-// すべてのトップメニューに共通するデザインを再利用するためのコンポーネント
+// MARK: - TopButton
+// トップ画面の各ボタン共通コンポーネント
 struct TopButton: View {
-    var title: String       // ボタンのメインタイトル
-    var subtitle: String    // ボタンの説明文
+    var title: String    // ボタンのメインタイトル
+    var subtitle: String // ボタンの補足説明
     
     var body: some View {
         VStack(spacing: 6) {
@@ -123,26 +115,23 @@ struct TopButton: View {
             Text(subtitle)
                 .font(.system(size: 14))
                 .multilineTextAlignment(.center)
-                .lineLimit(nil)
                 .fixedSize(horizontal: false, vertical: true) // 複数行対応
         }
-        .foregroundColor(.appAccent)
+        .foregroundColor(.appAccent) // 文字色（アクセントカラー）
         .padding(.vertical, 20)
         .frame(maxWidth: .infinity)
         .background(
-            // ボタン背景（深いブルーのグラデーション）
             LinearGradient(
-                colors: [.appDeepBlue, .appDeepBlue.opacity(0.8)],
+                colors: [.appDeepBlue, .appDeepBlue.opacity(0.8)], // ボタン背景グラデーション
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
             )
         )
-        .cornerRadius(20)
-        .shadow(color: .black.opacity(0.3), radius: 6, x: 4, y: 4)
+        .cornerRadius(20) // 角丸
+        .shadow(color: .black.opacity(0.3), radius: 6, x: 4, y: 4) // ドロップシャドウ
         .overlay(
-            // 半透明の白枠を重ねることで立体感を演出
             RoundedRectangle(cornerRadius: 20)
-                .stroke(.white.opacity(0.2), lineWidth: 1)
+                .stroke(.white.opacity(0.2), lineWidth: 1) // 薄い白枠で立体感
         )
         .padding(.horizontal, 10)
     }
