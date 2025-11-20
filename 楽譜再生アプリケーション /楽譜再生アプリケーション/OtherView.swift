@@ -4,9 +4,9 @@ import ZIPFoundation
 
 // MARK: - その他画面（データ共有や取込、PDF説明ページなどを表示）
 // この画面ではユーザーが以下の操作を行える：
-// ・楽譜データの共有（ZIPにまとめてエクスポート）
-// ・楽譜データの取り込み（ZIPをインポート）
-// ・MuseScore関連のPDFガイドを閲覧
+// 楽譜データの共有（ZIPにまとめてエクスポート）
+// 楽譜データの取り込み（ZIPをインポート）
+// MuseScore関連のPDFガイドを閲覧
 struct OtherView: View {
     // --- 状態管理用の@Stateプロパティ ---
     @State private var showShareMenu = false      // 「共有メニュー」シートの表示フラグ
@@ -75,9 +75,9 @@ struct OtherView: View {
                                 
                                 // --- 「データを共有」ボタン ---
                                 Button {
-                                    // ①シートを閉じて
+                                    // シートを閉じて
                                     showShareMenu = false
-                                    // ②少し待ってから（アニメーションずれ防止）選択シートを開く
+                                    // 少し待ってから（アニメーションずれ防止）選択シートを開く
                                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                                         showSelectSheet = true
                                     }
@@ -86,14 +86,20 @@ struct OtherView: View {
                                         .font(.title2.bold())
                                         .foregroundColor(.white)
                                         .frame(maxWidth: .infinity)
-                                        .frame(height: 100) // ⬅️ 通常より少し縦長に
+                                        .frame(height: 100)
                                         .background(
                                             LinearGradient(
-                                                colors: [Color.appAccent, Color.appDeepBlue],
+                                                colors: [
+                                                    Color(red: 76/255, green: 175/255, blue: 80/255),
+                                                    Color(red: 76/255, green: 175/255, blue: 80/255),
+                                                    Color(red: 76/255, green: 175/255, blue: 80/255),
+                                                    Color.appDeepBlue                                  // 紺
+                                                ],
                                                 startPoint: .topLeading,
                                                 endPoint: .bottomTrailing
                                             )
                                         )
+
                                         .cornerRadius(18)
                                         .shadow(color: .black.opacity(0.3), radius: 4, x: 2, y: 2)
                                 }
@@ -101,9 +107,7 @@ struct OtherView: View {
                                 
                                 // --- 「データを取り込む」ボタン ---
                                 Button {
-                                    // ①シートを閉じる
                                     showShareMenu = false
-                                    // ②少し待ってからZIP選択を開く
                                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                                         showImporter = true
                                     }
@@ -115,11 +119,18 @@ struct OtherView: View {
                                         .frame(height: 100)
                                         .background(
                                             LinearGradient(
-                                                colors: [Color.appOrange, Color.appDeepBlue],
+                                                colors: [
+                                                    Color.appOrange,
+                                                    Color.appOrange,
+                                                    Color.appOrange,
+                                                    Color(red: 184/255, green: 109/255, blue: 27/255),
+                                                    Color.appDeepBlue
+                                                ],
                                                 startPoint: .topLeading,
                                                 endPoint: .bottomTrailing
                                             )
                                         )
+
                                         .cornerRadius(18)
                                         .shadow(color: .black.opacity(0.3), radius: 4, x: 2, y: 2)
                                 }
@@ -232,8 +243,8 @@ struct OtherView: View {
                                     .padding()
                                     .background(
                                         selectedScore?.id == score.id
-                                        ? Color.white.opacity(0.4) // 選択中：少し明るく
-                                        : Color.white.opacity(0.3) // 通常：やや暗め
+                                        ? Color.white.opacity(0.4)
+                                        : Color.white.opacity(0.3) 
                                     )
                                     .cornerRadius(12)
                                 }
@@ -261,22 +272,16 @@ struct OtherView: View {
                             .background(
                                 LinearGradient(
                                     colors: canDecide
-                                    ? [Color.appAccent, Color.appOrange.opacity(0.9)] // 有効時：鮮やか
-                                    : [Color.gray.opacity(0.4), Color.gray.opacity(0.6)], // 無効時：グレー
+                                    ? [Color.appAccent, Color.appOrange.opacity(0.9)]
+                                    : [Color.gray.opacity(0.4), Color.gray.opacity(0.6)],
                                     startPoint: .topLeading,
                                     endPoint: .bottomTrailing
                                 )
                             )
                             .cornerRadius(16)
-                            .foregroundStyle(
-                                LinearGradient(
-                                    colors: [.white.opacity(0.9), .white],
-                                    startPoint: .top,
-                                    endPoint: .bottom
-                                )
-                            )
+                            .foregroundColor(canDecide ? .black : .white)
                             .shadow(color: Color.white.opacity(0.25), radius: 2, x: 0, y: 2)
-                            .scaleEffect(canDecide ? 1.05 : 1.0) // 選択時に少し拡大
+                            .scaleEffect(canDecide ? 1.05 : 1.0)
                             .animation(.easeInOut(duration: 0.3), value: canDecide)
                     }
                     .disabled(selectedScore == nil)
