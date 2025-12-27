@@ -89,17 +89,11 @@ struct OtherView: View {
                                         .frame(height: 100)
                                         .background(
                                             LinearGradient(
-                                                colors: [
-                                                    Color(red: 76/255, green: 175/255, blue: 80/255),
-                                                    Color(red: 76/255, green: 175/255, blue: 80/255),
-                                                    Color(red: 76/255, green: 175/255, blue: 80/255),
-                                                    Color.appDeepBlue                                  // 紺
-                                                ],
+                                                colors: [Color.appAccent, Color.appDeepBlue],
                                                 startPoint: .topLeading,
                                                 endPoint: .bottomTrailing
                                             )
                                         )
-
                                         .cornerRadius(18)
                                         .shadow(color: .black.opacity(0.3), radius: 4, x: 2, y: 2)
                                 }
@@ -119,18 +113,11 @@ struct OtherView: View {
                                         .frame(height: 100)
                                         .background(
                                             LinearGradient(
-                                                colors: [
-                                                    Color.appOrange,
-                                                    Color.appOrange,
-                                                    Color.appOrange,
-                                                    Color(red: 184/255, green: 109/255, blue: 27/255),
-                                                    Color.appDeepBlue
-                                                ],
+                                                colors: [Color.appOrange, Color.appDeepBlue],
                                                 startPoint: .topLeading,
                                                 endPoint: .bottomTrailing
                                             )
                                         )
-
                                         .cornerRadius(18)
                                         .shadow(color: .black.opacity(0.3), radius: 4, x: 2, y: 2)
                                 }
