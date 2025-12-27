@@ -28,6 +28,9 @@ struct PlayerView: View {
     @State private var loopEnd: Double = 0.0     // ループ終了位置
     
     
+    @State private var isControlCollapsed = false //コントロール部分収納
+
+    
     //画面スリープ制御
     func setIdleTimeerDisabled(_ disabled: Bool) {
         UIApplication.shared.isIdleTimerDisabled = disabled
@@ -71,12 +74,22 @@ struct PlayerView: View {
             .ignoresSafeArea()
             
             GeometryReader { geometry in
-                VStack(spacing: 0) {
-                    // PDF表示部分
-                    pdfSection(geometry: geometry)
+                ZStack(alignment: .bottom) {
+                    VStack(spacing: 0) {
+                        // PDF表示部分
+                        pdfSection(geometry: geometry)
+                        
+                        // コントロール部分
+                        controlSection(geometry: geometry)
+                            .offset(y: isControlCollapsed ? controlHideOffset(geometry) : 0)
+                            .animation(.easeInOut(duration: 0.35), value: isControlCollapsed)
+                            .allowsHitTesting(!isControlCollapsed) // ← 完全に触れなくする
+                    }
                     
-                    // コントロール部分（再生・ループ・パート切替）
-                    controlSection(geometry: geometry)
+                    // 収納中に表示される「戻すボタン」
+                    if isControlCollapsed {
+                        restoreButton(geometry: geometry)
+                    }
                 }
             }
         }
@@ -107,7 +120,11 @@ struct PlayerView: View {
                     displayDirection: .horizontal
                 )
                 .id(score.pdfParts[selectedPdfIndex].id)
-                .frame(height: geometry.size.height * 0.61)
+                .frame(
+                    height: geometry.size.height *
+                    (isControlCollapsed ? 0.92 : 0.61)
+                )
+                .animation(.easeInOut(duration: 0.35), value: isControlCollapsed)
                 .padding(.top, 1)
             } else {
                 Text("PDFが登録されていません")
@@ -153,65 +170,123 @@ struct PlayerView: View {
         }
     }
 
+    private func controlHideOffset(_ geometry: GeometryProxy) -> CGFloat {
+        geometry.size.height * 0.45
+    }
+
     //MARK: コントロール部分
     @ViewBuilder
     private func controlSection(geometry: GeometryProxy) -> some View {
-        ScrollView {
-            VStack(spacing: 15) {
-                // 再生位置バー（上段）
-                playbackSlider()
-                
-                //  中段：左に再生・ループボタン、右に速度バーとループ範囲
-                HStack(alignment: .top, spacing: 10) {
-                    VStack(spacing: 10) {
-                        // 再生ボタン
-                        CustomPlayButton(
-                            title: isPlaying ? "停止" : "再生",
-                            icon: isPlaying ? "stop.fill" : "play.fill",
-                            color: isPlaying ? .gray : .appAccent
-                        ) {
-                            if isPlaying {
-                                setIdleTimeerDisabled(false)
-                                stopAllPlayers()
-                            } else {
-                                isLooping = false
-                                startPlayback()
-                            }
-                        }
-                        .padding(.bottom, 45)
-                        // ループボタン（再生ボタンの下）
-                        CustomPlayButton(
-                            title: "ループ",
-                            icon: "repeat.circle.fill",
-                            color: .appAccent
-                        ) {
-                            if isLooping {
-                                startLoopPlayback(forceSeek: true)
-                            } else {
-                                startLoopPlayback(forceSeek: false)
-                            }
-                        }
-                    }
-                    .frame(width: geometry.size.width * 0.28)
-                    .padding(.top, 17)
+        ZStack(alignment: .topTrailing){
+            
+            
+            ScrollView {
+                VStack(spacing: 10) {
                     
-                    // 右側：速度バー＋ループ範囲設定
-                    VStack(alignment: .leading, spacing: 18) {
-                        playbackSpeedBar()
-                        loopSettings()
+                    // 再生位置バー（上段）
+                    playbackSlider()
+                        .padding(.top, 25)
+                    
+                    //  中段：左に再生・ループボタン、右に速度バーとループ範囲
+                    HStack(alignment: .top, spacing: 10) {
+                        VStack(spacing: 10) {
+                            // 再生ボタン
+                            CustomPlayButton(
+                                title: isPlaying ? "停止" : "再生",
+                                icon: isPlaying ? "stop.fill" : "play.fill",
+                                color: isPlaying ? .gray : .appAccent
+                            ) {
+                                if isPlaying {
+                                    setIdleTimeerDisabled(false)
+                                    stopAllPlayers()
+                                } else {
+                                    isLooping = false
+                                    startPlayback()
+                                }
+                            }
+                            .padding(.bottom, 45)
+                            // ループボタン（再生ボタンの下）
+                            CustomPlayButton(
+                                title: "ループ",
+                                icon: "repeat.circle.fill",
+                                color: .appAccent
+                            ) {
+                                if isLooping {
+                                    startLoopPlayback(forceSeek: true)
+                                } else {
+                                    startLoopPlayback(forceSeek: false)
+                                }
+                            }
+                        }
+                        .frame(width: geometry.size.width * 0.28)
+                        .padding(.top, 17)
+                        
+                        // 右側：速度バー＋ループ範囲設定
+                        VStack(alignment: .leading, spacing: 18) {
+                            playbackSpeedBar()
+                            loopSettings()
+                        }
+                        .frame(maxWidth: .infinity)
                     }
-                    .frame(maxWidth: .infinity)
+                    
+                    Divider().background(.white.opacity(0.3))
+                    partSwitchSection() // パートON/OFFはそのまま
                 }
-                
-                Divider().background(.white.opacity(0.3))
-                partSwitchSection() // パートON/OFFはそのまま
+                .padding()
+                .frame(minHeight: geometry.size.height / 3)
             }
-            .padding()
-            .frame(minHeight: geometry.size.height / 3)
+            //収納ボタン
+            Button {
+                withAnimation {
+                    isControlCollapsed = true
+                }
+            } label: {
+                HStack(spacing: 2) {
+                    Image(systemName: "chevron.down")
+                }
+                .font(.title2.bold())
+                .foregroundColor(.white)
+                .padding(10)
+                .background(
+                    Circle()
+                        .fill(Color.green.opacity(0.45))
+                        .shadow(radius: 2)
+                )
+            }
+            .padding(5)
         }
         .background(Color.appDeepBlue.opacity(0.7))
     }
     
+    //戻すボタン
+    @ViewBuilder
+    private func restoreButton(geometry: GeometryProxy) -> some View {
+        VStack {
+            HStack {
+                Spacer()
+                
+                Button {
+                    withAnimation {
+                        isControlCollapsed = false
+                    }
+                } label: {
+                    HStack(spacing: 2) {
+                        Image(systemName: "chevron.up")
+                    }
+                    .font(.title2.bold())
+                    .foregroundColor(.white)
+                    .padding(10)
+                    .background(
+                        Circle()
+                            .fill(Color.green.opacity(0.45))
+                            .shadow(radius: 2)
+                    )
+                }
+                .padding(10)
+            }
+        }
+    }
+
     //MARK: 再生スライダー
     @ViewBuilder
     private func playbackSlider() -> some View {
