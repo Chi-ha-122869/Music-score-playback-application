@@ -27,6 +27,10 @@ struct PlayerView: View {
     @State private var loopStart: Double = 0.0   // ループ開始位置
     @State private var loopEnd: Double = 0.0     // ループ終了位置
     
+    @State private var wasPlayingBeforeLoopAdjust: Bool = false
+
+    @State private var showNoPartPopup = false
+
     
     @State private var isControlCollapsed = false //コントロール部分収納
 
@@ -167,9 +171,48 @@ struct PlayerView: View {
                 .padding(.leading, 12)
                 .padding(.top, 5)
             }
+            if showNoPartPopup {
+                ZStack {
+                    // 背景暗転（今の画面位置を保つ）
+                    Color.black.opacity(0.45)
+                        .ignoresSafeArea()
+                    
+                    VStack {
+                        Spacer()
+                        
+                        Text("パートスイッチを\n設定してください")
+                            .font(.system(size: 20, weight: .bold))
+                            .foregroundColor(.white)
+                            .multilineTextAlignment(.center)
+                            .padding(30)
+                            .background(
+                                RoundedRectangle(cornerRadius: 18)
+                                    .fill(Color.appDeepBlue)
+                                    .shadow(radius: 10)
+                            )
+                            .padding(.bottom, 40)
+                    }
+                }
+                .transition(.opacity)
+                .zIndex(10)
+            }
+
         }
     }
 
+    private func showNoPartPopupForOneSecond() {
+        withAnimation {
+            showNoPartPopup = true
+        }
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+            withAnimation {
+                showNoPartPopup = false
+            }
+        }
+    }
+
+    
     private func controlHideOffset(_ geometry: GeometryProxy) -> CGFloat {
         geometry.size.height * 0.45
     }
@@ -200,6 +243,10 @@ struct PlayerView: View {
                                     setIdleTimeerDisabled(false)
                                     stopAllPlayers()
                                 } else {
+                                    if isAllPartsOff {
+                                        showNoPartPopupForOneSecond()
+                                        return
+                                    }
                                     isLooping = false
                                     startPlayback()
                                 }
@@ -211,6 +258,11 @@ struct PlayerView: View {
                                 icon: "repeat.circle.fill",
                                 color: .appAccent
                             ) {
+                                if isAllPartsOff {
+                                    showNoPartPopupForOneSecond()
+                                    return
+                                }
+                                
                                 if isLooping {
                                     startLoopPlayback(forceSeek: true)
                                 } else {
@@ -394,12 +446,51 @@ struct PlayerView: View {
             Text("ループ範囲設定")
                 .font(.system(size: 18, weight: .bold))
                 .foregroundColor(.white)
-            LoopSlider(label: "開始", time: $loopStart, range: 0...duration, color: .green)
-            LoopSlider(label: "終了", time: $loopEnd, range: loopStart...duration, color: .red)
+            
+            LoopSlider(
+                label: "開始",
+                time: $loopStart,
+                range: 0...duration,
+                color: .green
+            ) { editing in
+                handleLoopSliderEditing(editing)
+            }
+            
+            LoopSlider(
+                label: "終了",
+                time: $loopEnd,
+                range: loopStart...duration,
+                color: .red
+            ) { editing in
+                handleLoopSliderEditing(editing)
+            }
         }
         .padding(.horizontal, 10)
     }
 
+    private func handleLoopSliderEditing(_ editing: Bool) {
+        if editing {
+            wasPlayingBeforeLoopAdjust = isPlaying
+            if isPlaying {
+                setIdleTimeerDisabled(false)
+                stopAllPlayers()
+            }
+        } else {
+            seekAllPlayers(to: loopStart)
+            
+            if wasPlayingBeforeLoopAdjust {
+                if isLooping {
+                    startLoopPlayback(forceSeek: true)
+                } else {
+                    startPlayback()
+                }
+            }
+        }
+    }
+    // ループ範囲が有効か（1秒より長いか）
+    private var isValidLoopRange: Bool {
+        (loopEnd - loopStart) > 1.0
+    }
 
     //MARK: パートON/OFF切り替え
     @ViewBuilder
@@ -470,6 +561,13 @@ struct PlayerView: View {
         .padding(.horizontal, 10)
     }
 
+    // 全パートOFF判定
+    private var isAllPartsOff: Bool {
+        // mp3パートが存在し、かつ ON が1つもない場合
+        !score.mp3Parts.isEmpty &&
+        score.mp3Parts.allSatisfy { !(partSwitches[$0.id] ?? false) }
+    }
+
 
 
     // MARK: - 再生制御
@@ -504,6 +602,11 @@ struct PlayerView: View {
     }
     
     func startLoopPlayback(forceSeek: Bool) {
+        
+        guard isValidLoopRange else {
+            print("ループ範囲が1秒以内のため再生しません")
+            return
+        }
         //有効なパートを確認
         let activeParts = score.mp3Parts.filter { partSwitches[$0.id] ?? false }
         //全OFFなら何もせず return
@@ -626,6 +729,9 @@ struct LoopSlider: View {
     let range: ClosedRange<Double>
     let color: Color
     
+    // ★ 追加
+    let onEditingChanged: (Bool) -> Void
+    
     var body: some View {
         HStack {
             Text("\(label): \(formattedTime)")
@@ -633,8 +739,12 @@ struct LoopSlider: View {
                 .font(.subheadline.bold())
                 .foregroundColor(color)
             
-            Slider(value: $time, in: range)
-                .tint(color)
+            Slider(
+                value: $time,
+                in: range,
+                onEditingChanged: onEditingChanged   // ★ ここ
+            )
+            .tint(color)
         }
         .onChange(of: time) { formattedTime = formatTime(time) }
         .onAppear { formattedTime = formatTime(time) }
@@ -642,11 +752,10 @@ struct LoopSlider: View {
     
     private func formatTime(_ time: Double) -> String {
         let totalSeconds = Int(time)
-        let minutes = totalSeconds / 60
-        let seconds = totalSeconds % 60
-        return String(format: "%02d:%02d", minutes, seconds)
+        return String(format: "%02d:%02d", totalSeconds / 60, totalSeconds % 60)
     }
 }
+
 
 struct PartToggleView: View {
     let part: Mp3Part
